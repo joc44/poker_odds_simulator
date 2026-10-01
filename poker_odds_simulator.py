@@ -214,6 +214,7 @@ class Simulation:
             for kind in k_counter2.items():
                 if kind[1] == 3 or kind[1] == 2:
                     if Kind.value[kind[0]] > value:
+                        value = Kind.value[kind[0]]
                         _set2 = []
                         for card in seven_cards:
                             if card[1] == kind[0]:
@@ -223,6 +224,9 @@ class Simulation:
                         value_from_seven['kind'] = self.value(_set2[0]) * 2 + -_value_from_seven
                         value_from_seven['kicker'] = []
                         value_from_seven['_set'] = _set + _set2
+
+        if value_from_seven['rank'] == 6:
+            return value_from_seven
 
         # szín_számoló
         s_counter = {}

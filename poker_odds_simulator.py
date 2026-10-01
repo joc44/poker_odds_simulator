@@ -131,13 +131,191 @@ class Simulation:
 
         self.table.show_table()
 
+    def value(self, card: str):
+        return Kind.value[card[1]]
+
+
     def evalution(self, cards):
         value_from_seven = {'rank': 0, 'kind': 0, 'kicker': [], '_set':[]}
         seven_cards = set()
         for card in cards:
             seven_cards.add(str(card))
-        # számítások
 
+        # Royal_Flush
+        for suit in ['C', 'D', 'H', 'S']:
+            _set = set()
+            for kind in ['A', '0', 'J', 'Q', 'K']:
+                _set.add(suit + kind)
+            if _set.issubset(seven_cards):
+                value_from_seven['rank'] = 9
+                value_from_seven['_set'] = _set
+                return value_from_seven
+
+        # Straight_Flush
+        for suit in ['C', 'D', 'H', 'S']:
+            _set = []
+            for kind in ['A', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'J', 'Q', 'K']:
+                if (suit+kind) in seven_cards:
+                    _set.append(suit+kind)
+                elif len(_set) < 5:
+                    _set = []
+
+            if len(_set) > 4:
+                _set = _set[-5:]
+                value_from_seven['rank'] = 8
+                value_from_seven['kind'] = self.value(_set[-1])
+                value_from_seven['_set'] = _set
+                return value_from_seven
+
+
+        # típus_számoló
+        k_counter = {}
+        for card in seven_cards:
+            if card[1] in k_counter.keys():
+                k_counter[card[1]] += 1
+            else:
+                k_counter[card[1]] = 1
+
+
+        # Four_of_a_Kind
+
+        for kind in k_counter.items():
+            if kind[1] == 4:
+                _set = []
+                for card in seven_cards:
+                    if card[1] == kind[0]:
+                        _set.append(card)
+                value_from_seven['rank'] = 7
+                value_from_seven['kind'] = self.value(_set[0])
+                value_from_seven['kicker'] = [self.value(sorted(seven_cards.difference(_set), key=self.value)[-1])]
+                value_from_seven['_set'] = _set
+                return value_from_seven
+
+        # Full_House
+        value = 0
+        for kind in k_counter.items():
+            if kind[1] == 3:
+                if Kind.value[kind[0]] > value:
+                    value = Kind.value[kind[0]]
+                    _set = []
+                    for card in seven_cards:
+                        if card[1] == kind[0]:
+                            _set.append(card)
+                    value_from_seven['rank'] = 3
+                    value_from_seven['kind'] = self.value(_set[0])*3
+                    value_from_seven['kicker'] = [self.value(sorted(seven_cards.difference(_set), key=self.value)[-1])], [self.value(sorted(seven_cards.difference(_set), key=self.value)[-2])]
+                    value_from_seven['_set'] = _set
+
+        if value_from_seven['rank'] == 3:
+            _value_from_seven = value_from_seven['kind']
+            k_counter2 = k_counter.copy()
+            k_counter2.pop(_set[0][1])
+            value = 0
+            for kind in k_counter2.items():
+                if kind[1] == 3 or kind[1] == 2:
+                    if Kind.value[kind[0]] > value:
+                        _set2 = []
+                        for card in seven_cards:
+                            if card[1] == kind[0]:
+                                _set2.append(card)
+                        _set2 = _set2[:2]
+                        value_from_seven['rank'] = 6
+                        value_from_seven['kind'] = self.value(_set2[0]) * 2 + -_value_from_seven
+                        value_from_seven['kicker'] = []
+                        value_from_seven['_set'] = _set + _set2
+
+        # szín_számoló
+        s_counter = {}
+        for card in seven_cards:
+            if card[0] in s_counter.keys():
+                s_counter[card[0]] += 1
+            else:
+                s_counter[card[0]] = 1
+
+        # Flush
+        for suit in s_counter.items():
+            if suit[1] > 4:
+                _set = []
+                for card in seven_cards:
+                    _set.append(card)
+                _set = sorted(_set, key=self.value)[-5:]
+                value_from_seven['rank'] = 5
+                value_from_seven['kind'] = self.value(_set[-1])
+                value_from_seven['kicker'] = []
+                value_from_seven['_set'] = _set
+                return value_from_seven
+
+        # Straight
+
+        _set = []
+        for kind in ['A', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'J', 'Q', 'K']:
+            for card in seven_cards:
+                if kind == card[1]:
+                    _set.append(card)
+                    break
+            if _set:
+                if _set[-1][1] != kind and len(_set) < 5:
+                    _set = []
+                elif _set[-1][1] != kind and len(_set) >4:
+                    break
+        if len(_set) > 4:
+            _set = _set[-5:]
+            value_from_seven['rank'] = 4
+            value_from_seven['kind'] = self.value(_set[-1])
+            value_from_seven['kicker'] = []
+            value_from_seven['_set'] = _set
+            return value_from_seven
+        # Three_os_a_Kind
+        if value_from_seven['rank'] == 3:
+            return value_from_seven
+
+        # Two Pair
+        value = 0
+        for kind in k_counter.items():
+            if kind[1] == 2:
+                if Kind.value[kind[0]] > value:
+                    value = Kind.value[kind[0]]
+                    _set = []
+                    for card in seven_cards:
+                        if card[1] == kind[0]:
+                            _set.append(card)
+                    value_from_seven['rank'] = 1
+                    value_from_seven['kind'] = self.value(_set[0])
+                    value_from_seven['kicker'] = [self.value(sorted(seven_cards.difference(_set), key=self.value)[-1])], [self.value(sorted(seven_cards.difference(_set), key=self.value)[-2])],[self.value(sorted(seven_cards.difference(_set), key=self.value)[-3])]
+                    value_from_seven['_set'] = _set
+
+        if value_from_seven['rank'] == 1:
+            _value_from_seven = value_from_seven['kind']
+            k_counter2 = k_counter.copy()
+            k_counter2.pop(_set[0][1])
+            value = 0
+            for kind in k_counter2.items():
+                if kind[1] == 3 or kind[1] == 2:
+                    if Kind.value[kind[0]] > value:
+                        value = Kind.value[kind[0]]
+                        _set2 = []
+                        for card in seven_cards:
+                            if card[1] == kind[0]:
+                                _set2.append(card)
+                        _set2 = _set2[:2]
+                        value_from_seven['rank'] = 2
+                        value_from_seven['kind'] = self.value(_set2[0]) + _value_from_seven
+                        value_from_seven['kicker'] = [self.value(sorted(seven_cards.difference(_set), key=self.value)[-1])]
+                        value_from_seven['_set'] = _set + _set2
+
+
+        if value_from_seven['rank'] == 2:
+            return value_from_seven
+
+        # One_Pair
+        if value_from_seven['rank'] == 1:
+            return value_from_seven
+
+        # High_Card
+        value_from_seven['rank'] = 0
+        value_from_seven['kind'] = self.value(sorted(seven_cards, key=self.value)[-1])
+        value_from_seven['kicker'] = [self.value(sorted(seven_cards, key=self.value)[-i]) for i in range(2, 7)]
+        value_from_seven['_set'] = [sorted(seven_cards, key=self.value)[-1]]
         return value_from_seven
 
     def compare(self, value: list):
@@ -185,25 +363,25 @@ class Simulation:
 if __name__ == '__main__':
     print('\ >>> START PROGRAM\n')
 
-    N = 1
+    N = 5000
     win = 0
     lose = 0
     split = 0
 
     for i in range(N):
         deck = Deck()
-        player = Hand([deck.deal('HA'), deck.deal('D9')])
+        player = Hand([deck.deal('DQ'), deck.deal('S6')])
         othes = [Hand([deck.deal('??'), deck.deal('??')]),
                  Hand([deck.deal('??'), deck.deal('??')]),
                  Hand([deck.deal('??'), deck.deal('??')]),
                  Hand([deck.deal('??'), deck.deal('??')]),
                  Hand([deck.deal('??'), deck.deal('??')]
                       )]
-        common = Common([deck.deal('HK'),
+        common = Common([deck.deal('D0'),
                          deck.deal('D4'),
-                         deck.deal('C8'),
-                         deck.deal('CA'),
-                         deck.deal('SJ')
+                         deck.deal('S0'),
+                         deck.deal('HA'),
+                         deck.deal('H7')
                          ])
 
         table = Table()

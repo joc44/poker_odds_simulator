@@ -66,6 +66,11 @@ class Deck:
         print('Missdealing. Bye!')
         exit()
 
+    def random_deal(self):
+        _temp = choice(self.deck)
+        self.deck.remove(_temp)
+        return _temp
+
 
 class Common:
     def __init__(self, cards: list):
@@ -106,11 +111,46 @@ class Table:
             print(str(i + 2) + '.player:', str(hand))
         print()
 
+class Simulation:
+    def __init__(self, table: Table):
+        self.table = table
+
+    def complete(self):
+        for i, card in enumerate(self.table.common.cards):
+            if str(card) == '??':
+                self.table.common.cards[i] = deck.random_deal()
+
+        for i, card in enumerate(self.table.player.cards):
+            if str(card) == '??':
+                self.table.player.cards[i] = deck.random_deal()
+
+        for i, hand in enumerate(self.table.others):
+            for k, card in enumerate(hand.cards):
+                if str(card) == '??':
+                    self.table.others[i].cards[k] = deck.random_deal()
+
+        self.table.show_table()
+
+    def evalution(self):
+        pass
+
+    def simulation(self):
+        self.complete()
+
+        player_value = self.evalution(self.table.common.cards[:] + self.table.player.cards[:])
+
+        others_value = []
+        for i, opponent in enumerate(self.table.others):
+            others_value.append(self.evalution(self.table.common.cards[:] + opponent.cards[:]))
+
+
+
+
 
 if __name__ == '__main__':
     print('\ >>> START PROGRAM\n')
 
-    N = 1000
+    N = 1
     win = 0
     lose = 0
     split = 0
@@ -133,15 +173,18 @@ if __name__ == '__main__':
 
         table = Table()
         table.deal(deck, common, player, othes)
+        #table.show_table()
 
-        '''simulation = Simulation(table)
+        simulation = Simulation(table)
+        #simulation.complete()
+
         result = simulation.simulation()
         if result == True:
             win +=1
         elif result == False:
             lose += 1
         else:
-            split += 1 '''
+            split += 1
 
     print('Win:\t', round(win / N * 100, 2), ' %')
     print('Lose:\t', round(lose / N * 100, 2), ' %')

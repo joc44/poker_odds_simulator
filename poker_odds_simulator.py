@@ -131,8 +131,25 @@ class Simulation:
 
         self.table.show_table()
 
-    def evalution(self):
-        pass
+    def evalution(self, cards):
+        value_from_seven = {'rank': 0, 'kind': 0, 'kicker': [], '_set':[]}
+        seven_cards = set()
+        for card in cards:
+            seven_cards.add(str(card))
+        # számítások
+
+        return value_from_seven
+
+    def compare(self, value: list):
+        min_length = min(len(value[0]), len(value[1]))
+        for i in range(min_length):
+            if value[0][i] > value[1][i]:
+                return True
+            elif value[0][i] < value[1][i]:
+                return False
+        return None
+
+
 
     def simulation(self):
         self.complete()
@@ -142,6 +159,24 @@ class Simulation:
         others_value = []
         for i, opponent in enumerate(self.table.others):
             others_value.append(self.evalution(self.table.common.cards[:] + opponent.cards[:]))
+
+
+        vectors = []
+        for hand in [player_value] + others_value:
+            vector = [hand['rank'], hand['kind']]
+            for x in hand['kicker']:
+                vector.append(x)
+            vectors.append(vector)
+
+        hand_values = []
+        for opponent in vectors[1:]:
+            hand_values.append(self.compare([vectors[0], opponent]))
+        if False in hand_values:
+            return False
+        elif None in hand_values:
+            return None
+        else:
+            return True
 
 
 
@@ -176,7 +211,7 @@ if __name__ == '__main__':
         #table.show_table()
 
         simulation = Simulation(table)
-        #simulation.complete()
+        simulation.complete()
 
         result = simulation.simulation()
         if result == True:
